@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Twibbon Online — Pilih Frame & Download</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Segoe UI',Tahoma,Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#312e81 100%);
+    color:#f1f5f9;min-height:100vh;padding:18px;
+    overflow-x:hidden;
+  }
+  .wrap{max-width:1200px;margin:0 auto}
+  header{
+    text-align:center;padding:18px 12px 8px;
+  }
+  header h1{
+    font-size:clamp(22px,4vw,32px);font-weight:800;
+    background:linear-gradient(90deg,#fbbf24,#f97316,#ec4899);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    letter-spacing:.5px;
+  }
+  header p{color:#cbd5e1;font-size:14px;margin-top:6px}
+
+  .panel{
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:18px;
+    padding:16px;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    margin-top:16px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap:18px;
+  }
+  @media (max-width: 900px){
+    .grid{grid-template-columns:1fr}
+  }
+
+  .stage{
+    position:relative;background:#0b1220;border-radius:14px;
+    overflow:hidden;display:flex;align-items:center;justify-content:center;
+    aspect-ratio:858/1280;width:100%;
+    border:1px solid rgba(255,255,255,.08);
+    touch-action:none;
+  }
+  #preview{display:block;width:100%;height:100%;user-select:none;-webkit-user-select:none;touch-action:none}
+
+  .controls h3{
+    font-size:14px;font-weight:700;color:#fbbf24;
+    letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px;
+  }
+
+  .frame-picker{
+    display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;
+  }
+  .frame-card{
+    flex:1 1 calc(50% - 6px);
+    background:rgba(0,0,0,.3);
+    border:2px solid rgba(255,255,255,.12);
+    border-radius:12px;padding:8px;cursor:pointer;
+    transition:.2s;position:relative;text-align:center;
+  }
+  .frame-card:hover{border-color:rgba(251,191,36,.6);transform:translateY(-2px)}
+  .frame-card.active{
+    border-color:#fbbf24;
+    box-shadow:0 0 0 3px rgba(251,191,36,.25);
+  }
+  .frame-card img{
+    width:100%;height:120px;object-fit:contain;border-radius:6px;display:block;
+    background:#000;margin:0 auto;
+  }
+  .frame-card .label{
+    font-size:11px;font-weight:700;color:#fbbf24;
+    margin-top:6px;letter-spacing:.5px;
+  }
+
+  .upload-row{
+    background:rgba(251,191,36,.08);
+    border:2px dashed rgba(251,191,36,.4);
+    border-radius:12px;padding:16px;text-align:center;
+    cursor:pointer;transition:.2s;margin-bottom:14px;
+  }
+  .upload-row:hover{background:rgba(251,191,36,.15);border-color:rgba(251,191,36,.7)}
+  .upload-row input{display:none}
+  .upload-row .icon{font-size:30px;display:block;margin-bottom:6px}
+  .upload-row strong{display:block;color:#fbbf24;font-size:14px}
+  .upload-row small{color:#cbd5e1;font-size:11px;display:block;margin-top:4px}
+
+  .preview-thumb{
+    display:flex;align-items:center;gap:10px;
+    background:rgba(0,0,0,.25);border-radius:10px;
+    padding:8px;margin-bottom:14px;font-size:12px;
+  }
+  .preview-thumb img{
+    width:46px;height:46px;border-radius:8px;object-fit:cover;
+    border:2px solid rgba(251,191,36,.5);
+  }
+
+  .slider-block{margin-bottom:12px}
+  .slider-block label{
+    display:flex;justify-content:space-between;
+    font-size:12px;color:#e2e8f0;font-weight:600;
+    margin-bottom:5px;
+  }
+  .slider-block label span{color:#fbbf24}
+  input[type=range]{
+    width:100%;height:6px;border-radius:6px;
+    background:rgba(255,255,255,.15);outline:none;
+    appearance:none;-webkit-appearance:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    appearance:none;-webkit-appearance:none;
+    width:18px;height:18px;border-radius:50%;
+    background:#fbbf24;border:2px solid #fff;
+    cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.4);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;
+    background:#fbbf24;border:2px solid #fff;cursor:pointer;
+  }
+
+  .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  .btn{
+    border:none;border-radius:10px;padding:11px;
+    font-weight:700;font-size:13px;cursor:pointer;
+    transition:.2s;letter-spacing:.4px;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .btn-primary{
+    background:linear-gradient(90deg,#f97316,#ec4899);
+    color:#fff;grid-column:1 / -1;
+  }
+  .btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px)}
+  .btn-primary:active{transform:translateY(0)}
+  .btn-secondary{
+    background:rgba(255,255,255,.08);color:#f1f5f9;
+    border:1px solid rgba(255,255,255,.15);
+  }
+  .btn-secondary:hover{background:rgba(255,255,255,.15)}
+  .btn-danger{background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+  .btn-danger:hover{background:rgba(239,68,68,.3)}
+
+  .hint{
+    font-size:11px;color:#94a3b8;text-align:center;
+    margin-top:8px;line-height:1.5;
+  }
+
+  .toast{
+    position:fixed;left:50%;top:24px;transform:translateX(-50%);
+    padding:12px 22px;border-radius:10px;font-weight:700;
+    background:rgba(16,185,129,.95);color:#fff;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+    z-index:999;opacity:0;pointer-events:none;
+    transition:opacity .3s,transform .3s;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(8px)}
+  .toast.err{background:rgba(239,68,68,.95)}
+
+  footer{
+    text-align:center;color:#64748b;font-size:11px;
+    padding:18px 0 6px;line-height:1.6;
+  }
+
+  .spinner{
+    display:none;position:absolute;inset:0;
+    background:rgba(0,0,0,.6);align-items:center;justify-content:center;
+    border-radius:14px;z-index:5;
+  }
+  .spinner.on{display:flex}
+  .spinner::after{
+    content:'';width:34px;height:34px;border:4px solid rgba(251,191,36,.3);
+    border-top-color:#fbbf24;border-radius:50%;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🖼️ 4rD Twibbon Online Creator</h1>
+    <p>"Untuk menggeser kebawah, sentuh di area" baca'an</p>
+<p>(Geser foto dengan 1 jari) dibawah foto frame</p>
+  </header>
+
+  <div class="grid">
+    <!-- LIVE PREVIEW -->
+    <div class="panel" style="padding:14px">
+      <div class="stage" id="stage">
+        <canvas id="preview" width="858" height="1280"></canvas>
+        <div class="spinner" id="spinner"></div>
+      </div>
+      <div class="hint">
+        💡 <b>Sentuhan:</b> Geser foto dengan 1 jari · Cubit 2 jari untuk Zoom in/out
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="panel controls">
+      <h3>① Pilih Frame</h3>
+      <div class="frame-picker" id="framePicker">
+        <div class="frame-card active" data-frame="0">
+          <img id="thumb0" src="https://res.cloudinary.com/lyaug7gm/image/upload/v1792596963/20261021_161458.png" crossorigin="anonymous" alt="Frame 1" />
+          <div class="label">FRAME 1</div>
+        </div>
+        <div class="frame-card" data-frame="1">
+          <img id="thumb1" src="https://res.cloudinary.com/lyaug7gm/image/upload/v1792596963/20261021_161446.png" crossorigin="anonymous" alt="Frame 2" />
+          <div class="label">FRAME 2</div>
+        </div>
+      </div>
+
+      <h3>② Upload Foto</h3>
+      <div class="upload-row" onclick="document.getElementById('fileInput').click()">
+        <span class="icon">📷</span>
+        <strong>Pilih / Upload Foto Anda</strong>
+        <small>Format PNG/JPG (Otomatis dapat digeser & di-zoom)</small>
+        <input type="file" id="fileInput" accept="image/*" />
+      </div>
+
+      <div class="preview-thumb" id="thumbBox" style="display:none">
+        <img id="userThumb" src="" alt="Thumb" />
+        <div>
+          <strong style="color:#fbbf24;display:block" id="fileName">foto.jpg</strong>
+          <span style="color:#cbd5e1" id="fileSize">0 KB</span>
+        </div>
+      </div>
+
+      <h3>③ Atur Foto</h3>
+      <div class="slider-block">
+        <label>Zoom Foto: <span id="zoomVal">100%</span></label>
+        <input type="range" id="zoomSlider" min="10" max="500" value="100" />
+      </div>
+
+      <div class="slider-block">
+        <label>Rotasi Foto: <span id="rotVal">0°</span></label>
+        <input type="range" id="rotSlider" min="-180" max="180" value="0" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="btnReset">🔄 Reset Posisi</button>
+        <button class="btn btn-danger" id="btnRemove">🗑️ Hapus Foto</button>
+        <button class="btn btn-primary" id="btnDownload">💾 Unduh Twibbon</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    4rD Twibbon Online Editor &copy; 2026 — Dibuat untuk Kemudahan Berbagi Frame husus santri & alumni AL-AS'ADY / AL-AS'ADIYAH
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // Links Cloudinary untuk Twibbon Frame
+  const frameUrls = [
+    'https://res.cloudinary.com/lyaug7gm/image/upload/v1792596963/20261021_161458.png',
+    'https://res.cloudinary.com/lyaug7gm/image/upload/v1792596963/20261021_161446.png'
+  ];
+
+  const canvas = document.getElementById('preview');
+  const ctx = canvas.getContext('2d');
+  const spinner = document.getElementById('spinner');
+
+  let currentFrameIdx = 0;
+  let frameImages = [new Image(), new Image()];
+  let userImage = null;
+
+  // Transform states
+  let scale = 1;
+  let rotation = 0; // in degrees
+  let posX = 0;
+  let posY = 0;
+
+  // Touch gesture states
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
+  let initialPinchDistance = null;
+  let initialScale = 1;
+
+  // Elements
+  const zoomSlider = document.getElementById('zoomSlider');
+  const zoomVal = document.getElementById('zoomVal');
+  const rotSlider = document.getElementById('rotSlider');
+  const rotVal = document.getElementById('rotVal');
+  const fileInput = document.getElementById('fileInput');
+
+  // Load Frames
+  function loadFrames() {
+    spinner.classList.add('on');
+    let loadedCount = 0;
+
+    frameUrls.forEach((url, idx) => {
+      frameImages[idx].crossOrigin = 'anonymous';
+      frameImages[idx].src = url;
+      frameImages[idx].onload = () => {
+        loadedCount++;
+        if (loadedCount === frameUrls.length) {
+          spinner.classList.remove('on');
+          render();
+        }
+      };
+      frameImages[idx].onerror = () => {
+        showToast('Gagal memuat frame dari Cloudinary', true);
+        spinner.classList.remove('on');
+      };
+    });
+  }
+
+  // Render Canvas
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 1. Draw User Photo (Behind Frame)
+    if (userImage) {
+      ctx.save();
+      // Center origin for rotation and translation
+      ctx.translate(canvas.width / 2 + posX, canvas.height / 2 + posY);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.scale(scale, scale);
+
+      // Draw photo centered
+      const drawWidth = userImage.width;
+      const drawHeight = userImage.height;
+      ctx.drawImage(userImage, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+      ctx.restore();
+    } else {
+      // Draw Placeholder Background
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#64748b';
+      ctx.font = '30px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Silakan Upload Foto Anda', canvas.width / 2, canvas.height / 2);
+    }
+
+    // 2. Draw Active Twibbon Frame
+    const activeFrame = frameImages[currentFrameIdx];
+    if (activeFrame && activeFrame.complete && activeFrame.naturalWidth !== 0) {
+      ctx.drawImage(activeFrame, 0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  // Frame Selector
+  document.querySelectorAll('.frame-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.frame-card').forEach((c) => c.classList.remove('active'));
+      card.classList.add('active');
+      currentFrameIdx = parseInt(card.dataset.frame);
+      render();
+    });
+  });
+
+  // Photo Upload Handler
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const img = new Image();
+      img.onload = () => {
+        userImage = img;
+        resetPosition();
+
+        // Update Thumb Info
+        document.getElementById('userThumb').src = evt.target.result;
+        document.getElementById('fileName').innerText = file.name;
+        document.getElementById('fileSize').innerText = (file.size / 1024).toFixed(1) + ' KB';
+        document.getElementById('thumbBox').style.display = 'flex';
+
+        showToast('Foto berhasil diupload!');
+        render();
+      };
+      img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Reset Position & Zoom
+  function resetPosition() {
+    if (!userImage) return;
+    // Calculate scale to fit frame initially
+    const scaleX = canvas.width / userImage.width;
+    const scaleY = canvas.height / userImage.height;
+    scale = Math.max(scaleX, scaleY); // Cover stage
+
+    posX = 0;
+    posY = 0;
+    rotation = 0;
+
+    updateSliderUI();
+    render();
+  }
+
+  function updateSliderUI() {
+    zoomSlider.value = Math.round(scale * 100);
+    zoomVal.innerText = Math.round(scale * 100) + '%';
+    rotSlider.value = rotation;
+    rotVal.innerText = rotation + '°';
+  }
+
+  // Slider Events
+  zoomSlider.addEventListener('input', (e) => {
+    scale = parseFloat(e.target.value) / 100;
+    zoomVal.innerText = e.target.value + '%';
+    render();
+  });
+
+  rotSlider.addEventListener('input', (e) => {
+    rotation = parseInt(e.target.value);
+    rotVal.innerText = rotation + '°';
+    render();
+  });
+
+  document.getElementById('btnReset').addEventListener('click', resetPosition);
+
+  document.getElementById('btnRemove').addEventListener('click', () => {
+    userImage = null;
+    fileInput.value = '';
+    document.getElementById('thumbBox').style.display = 'none';
+    render();
+    showToast('Foto telah dihapus');
+  });
+
+  // Get Mouse/Touch coordinates relative to Canvas scale
+  function getCanvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  }
+
+  // Helper for pinch distance
+  function getPinchDistance(e) {
+    if (e.touches && e.touches.length >= 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+    return 0;
+  }
+
+  // Pointer & Touch Events
+  canvas.addEventListener('mousedown', (e) => {
+    if (!userImage) return;
+    isDragging = true;
+    const coords = getCanvasCoords(e);
+    startX = coords.x - posX;
+    startY = coords.y - posY;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging || !userImage) return;
+    const coords = getCanvasCoords(e);
+    posX = coords.x - startX;
+    posY = coords.y - startY;
+    render();
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+
+  // Touch Events (Single finger drag & 2-finger Pinch Zoom)
+  canvas.addEventListener('touchstart', (e) => {
+    if (!userImage) return;
+    if (e.touches.length === 1) {
+      // Single Finger Drag Start
+      isDragging = true;
+      const coords = getCanvasCoords(e);
+      startX = coords.x - posX;
+      startY = coords.y - posY;
+    } else if (e.touches.length === 2) {
+      // Pinch Start
+      isDragging = false;
+      initialPinchDistance = getPinchDistance(e);
+      initialScale = scale;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', (e) => {
+    if (!userImage) return;
+    e.preventDefault(); // Prevent page scrolling while dragging/zooming on canvas
+
+    if (e.touches.length === 1 && isDragging) {
+      // Single Finger Dragging
+      const coords = getCanvasCoords(e);
+      posX = coords.x - startX;
+      posY = coords.y - startY;
+      render();
+    } else if (e.touches.length === 2 && initialPinchDistance) {
+      // Pinch Zooming
+      const currentDist = getPinchDistance(e);
+      if (currentDist > 0) {
+        const factor = currentDist / initialPinchDistance;
+        let newScale = initialScale * factor;
+        newScale = Math.max(0.1, Math.min(5.0, newScale));
+        scale = newScale;
+        updateSliderUI();
+        render();
+      }
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) {
+      initialPinchDistance = null;
+    }
+    if (e.touches.length === 0) {
+      isDragging = false;
+    }
+  });
+
+  // Mouse Wheel Zoom
+  canvas.addEventListener('wheel', (e) => {
+    if (!userImage) return;
+    e.preventDefault();
+    const zoomFactor = e.deltaY < 0 ? 1.05 : 0.95;
+    let newScale = scale * zoomFactor;
+    newScale = Math.max(0.1, Math.min(5.0, newScale));
+    scale = newScale;
+    updateSliderUI();
+    render();
+  }, { passive: false });
+
+  // Download Handler
+  document.getElementById('btnDownload').addEventListener('click', () => {
+    if (!userImage) {
+      showToast('Silakan upload foto terlebih dahulu!', true);
+      return;
+    }
+    
+    try {
+      const link = document.createElement('a');
+      link.download = 'twibbon-result.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('Twibbon berhasil diunduh!');
+    } catch(err) {
+      showToast('Gagal mengunduh gambar (CORS issue)', true);
+    }
+  });
+
+  // Toast System
+  function showToast(msg, isErr = false) {
+    const toast = document.getElementById('toast');
+    toast.innerText = msg;
+    toast.className = 'toast show' + (isErr ? ' err' : '');
+    setTimeout(() => {
+      toast.className = 'toast';
+    }, 3000);
+  }
+
+  // Initialize
+  window.onload = () => {
+    loadFrames();
+  };
+</script>
+</body>
+</html>
